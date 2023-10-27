@@ -80,10 +80,11 @@ func portUse(port int) int {
 
 func initIndex() error {
 	f := filepath.Join(appDirectory(), "index.html")
-	fi, err := os.OpenFile(f, os.O_CREATE|os.O_TRUNC, os.ModePerm)
+	fi, err := os.OpenFile(f, os.O_CREATE|os.O_TRUNC|os.O_APPEND|syscall.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return err
 	}
+	_ = fi.Truncate(0)
 	_, err = fi.WriteString(strings.ReplaceAll(htmlTemplate, "__WEB_PATH__", appDirectory()))
 	if err != nil {
 		return err
