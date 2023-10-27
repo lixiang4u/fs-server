@@ -29,7 +29,7 @@ func main() {
 	port := portUse(parseArgPort())
 
 	go func() {
-		_ = r.Run(fmt.Sprintf("127.0.0.1:%d", port))
+		_ = r.Run(fmt.Sprintf(":%d", port))
 	}()
 	go func() {
 		cmd := exec.Command("cmd", "/c", "start", fmt.Sprintf("http://127.0.0.1:%d", port))
