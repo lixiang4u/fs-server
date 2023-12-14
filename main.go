@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -32,8 +33,15 @@ func main() {
 		_ = r.Run(fmt.Sprintf(":%d", port))
 	}()
 	go func() {
-		cmd := exec.Command("cmd", "/c", "start", fmt.Sprintf("http://127.0.0.1:%d", port))
-		_ = cmd.Run()
+		var osName = strings.ToLower(runtime.GOOS)
+		switch osName {
+		case "windows":
+			cmd := exec.Command("cmd", "/c", "start", fmt.Sprintf("http://127.0.0.1:%d", port))
+			_ = cmd.Run()
+		case "darwin":
+			cmd := exec.Command("open", fmt.Sprintf("http://127.0.0.1:%d", port))
+			_ = cmd.Run()
+		}
 	}()
 
 	select {
@@ -134,7 +142,7 @@ const htmlTemplate = `
 
 <div class="c">
     <div class="title">你好, Hello</div>
-    <div class="info">file:///<span>__WEB_PATH__</span></div>
+    <div class="info">file://<span>__WEB_PATH__</span></div>
 </div>
 
 </body>
