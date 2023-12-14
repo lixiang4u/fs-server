@@ -97,26 +97,33 @@ const htmlTemplate = `
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>fs-server</title>
     <style type="text/css">
-        html,body,.c{height: 100%;}
-        .c{
+        html, body, .c {
+            height: 100%;
+        }
+
+        .c {
             display: flex;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
 
             font-family: "Microsoft JhengHei UI";
             text-align: center;
         }
-        .c .title{
+
+        .c .title {
             font-size: 86px;
+            margin-bottom: 20px;
         }
-        .c .info{
+
+        .c .info {
             color: #6e6e6e;
-            margin-top: 20px;
             font-size: 38px;
         }
-        .c .info  span{
+
+        .c .info span {
             border-bottom: 2px solid #a1a1a1;
             padding: 2px;
             cursor: copy;
@@ -126,10 +133,8 @@ const htmlTemplate = `
 <body>
 
 <div class="c">
-    <div>
-        <div class="title">你好, Hello</div>
-        <div class="info">file:///<span>__WEB_PATH__</span></div>
-    </div>
+    <div class="title">你好, Hello</div>
+    <div class="info">file:///<span>__WEB_PATH__</span></div>
 </div>
 
 </body>
