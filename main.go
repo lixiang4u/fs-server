@@ -25,7 +25,7 @@ func main() {
 
 	_ = initIndex()
 	r := gin.Default()
-	r.Static("/", appDirectory())
+	r.StaticFS("/", gin.Dir(appDirectory(), true))
 
 	port := portUse(parseArgPort())
 
@@ -36,10 +36,10 @@ func main() {
 		var osName = strings.ToLower(runtime.GOOS)
 		switch osName {
 		case "windows":
-			cmd := exec.Command("cmd", "/c", "start", fmt.Sprintf("http://127.0.0.1:%d", port))
+			cmd := exec.Command("cmd", "/c", "start", fmt.Sprintf("http://127.0.0.1:%d/readme.html", port))
 			_ = cmd.Run()
 		case "darwin":
-			cmd := exec.Command("open", fmt.Sprintf("http://127.0.0.1:%d", port))
+			cmd := exec.Command("open", fmt.Sprintf("http://127.0.0.1:%d/readme.html", port))
 			_ = cmd.Run()
 		}
 	}()
@@ -87,7 +87,7 @@ func portUse(port int) int {
 }
 
 func initIndex() error {
-	f := filepath.Join(appDirectory(), "index.html")
+	f := filepath.Join(appDirectory(), "readme.html")
 	_, err := os.Stat(f)
 	if err == nil {
 		return nil
@@ -113,6 +113,11 @@ const htmlTemplate = `
     <style type="text/css">
         html, body, .c {
             height: 100%;
+            margin: 0;
+        }
+
+        body {
+            margin: 0;
         }
 
         .c {
@@ -136,7 +141,7 @@ const htmlTemplate = `
         }
 
         .c .info span {
-            border-bottom: 2px solid #a1a1a1;
+            /*border-bottom: 2px solid #a1a1a1;*/
             padding: 2px;
             cursor: copy;
         }
@@ -146,7 +151,7 @@ const htmlTemplate = `
 
 <div class="c">
     <div class="title">你好, Hello</div>
-    <div class="info">file://<span>__WEB_PATH__</span></div>
+    <a class="info" href="/">file://<span>__WEB_PATH__</span></a>
 </div>
 
 </body>
