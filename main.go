@@ -18,16 +18,17 @@ import (
 
 const defaultPort = 8000
 
+var port = defaultPort
+
 func main() {
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGKILL)
 
+	port = portUse(parseArgPort())
 	_ = initIndex()
 	r := gin.Default()
 	r.StaticFS("/", gin.Dir(appDirectory(), true))
-
-	port := portUse(parseArgPort())
 
 	go func() {
 		_ = r.Run(fmt.Sprintf(":%d", port))
@@ -86,18 +87,64 @@ func portUse(port int) int {
 	return port
 }
 
+func parseNetworkList() map[string]string {
+	var m = make(map[string]string)
+	interfaceList, _ := net.Interfaces()
+	for _, tmpInterface := range interfaceList {
+		// 只看Up和Running状态，不是广播和多播
+		if tmpInterface.Flags&net.FlagUp == 0 || tmpInterface.Flags&net.FlagRunning == 0 {
+			continue
+		}
+		addrList, _ := tmpInterface.Addrs()
+		for _, tmpAddr := range addrList {
+			tmpIp, _, err := net.ParseCIDR(tmpAddr.String())
+			if err != nil {
+				continue
+			}
+			var tmpIpV4 = net.ParseIP(tmpIp.String()).To4()
+			if tmpIpV4 == nil || len(tmpIpV4) != 4 {
+				continue
+			}
+			if tmpIpV4[3] == 0x1 {
+				continue
+			}
+			m[tmpInterface.Name] = tmpIp.String()
+		}
+	}
+	return m
+}
+
+func generateNetworkHtml() string {
+	var m = parseNetworkList()
+	if m == nil || len(m) <= 0 {
+		return ""
+	}
+	var s = "<ul>"
+	for tmpName, tmpIp := range m {
+		var tmpUrl = fmt.Sprintf("http://%s:%d", tmpIp, port)
+		s += fmt.Sprintf(`<li><a href="%s" title="%s">%s</a> (%s)</li>`, tmpUrl, tmpName, tmpUrl, strings.ToUpper(tmpName))
+	}
+	s += "</ul>"
+
+	return s
+}
+
 func initIndex() error {
 	f := filepath.Join(appDirectory(), "readme.html")
-	_, err := os.Stat(f)
-	if err == nil {
-		return nil
-	}
+	//_, err := os.Stat(f)
+	//if err == nil {
+	//	return nil
+	//}
+
+	var htmlString = strings.ReplaceAll(htmlTemplate, "__WEB_PATH__", appDirectory())
+	htmlString = strings.ReplaceAll(htmlString, "__HOST_LIST__", generateNetworkHtml())
+
 	fi, err := os.OpenFile(f, os.O_CREATE|os.O_TRUNC|os.O_APPEND|syscall.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return err
 	}
 	_ = fi.Truncate(0)
-	_, err = fi.WriteString(strings.ReplaceAll(htmlTemplate, "__WEB_PATH__", appDirectory()))
+	_, err = fi.WriteString(htmlString)
 	if err != nil {
 		return err
 	}
@@ -132,18 +179,24 @@ const htmlTemplate = `
 
         .c .title {
             font-size: 86px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         .c .info {
             color: #6e6e6e;
-            font-size: 38px;
+            font-size: 28px;
         }
 
         .c .info span {
-            /*border-bottom: 2px solid #a1a1a1;*/
+            border-bottom: 2px solid #a1a1a1;
             padding: 2px;
             cursor: copy;
+        }
+        ul {
+            list-style-type: square;
+            line-height: 200%;
+            font-size: 22px;
+            text-align: left;
         }
     </style>
 </head>
@@ -151,7 +204,8 @@ const htmlTemplate = `
 
 <div class="c">
     <div class="title">你好, Hello</div>
-    <a class="info" href="/">file://<span>__WEB_PATH__</span></a>
+    <a class="info">file://<span>__WEB_PATH__</span></a>
+	__HOST_LIST__
 </div>
 
 </body>
